@@ -17,6 +17,7 @@ public:
 	Node& operator =(const Node&);
 
 	bool operator ==(const Node&); 
+	bool operator !=(const Node&);
 	double get_X();
 	double get_Y();
 	double get_angle();

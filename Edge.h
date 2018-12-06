@@ -9,12 +9,13 @@ class Edge
 public:
 	Edge();
 	Edge( Node&, Node&);
+
 	~Edge();
 
 	Node get_start_point();
 	Node get_finish_point();
 
-
+	void set_neighbord(Triangle &);
 	double lnegth_of_edge();
 	Edge operator = (const Edge& );
 	bool operator == (const Edge&);

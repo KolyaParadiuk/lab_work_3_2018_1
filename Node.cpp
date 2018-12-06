@@ -22,6 +22,11 @@ bool Node::operator==(const Node &that)
 	return(this->coordinate_x == that.coordinate_x && this->coordinate_y == that.coordinate_y);
 }
 
+bool Node::operator!=(const Node &that)
+{
+	return(this->coordinate_x != that.coordinate_x || this->coordinate_y != that.coordinate_y);
+}
+
 double Node::get_X()
 {
 	return coordinate_x;

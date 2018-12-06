@@ -13,6 +13,7 @@ Edge::Edge( Node & start,  Node &finish)
 
 }
 
+
 Edge::~Edge()
 {
 
@@ -27,6 +28,16 @@ Node Edge::get_start_point()
 Node Edge::get_finish_point()
 {
 	return fin_point;
+}
+
+void Edge::set_neighbord(Triangle & that)
+{
+
+	for (int i = 0; i < neigbords.size(); i++)
+		if (neigbords[i] == that) return;
+		
+	neigbords.push_back(that);		
+		
 }
 
 double Edge::lnegth_of_edge()
@@ -49,5 +60,5 @@ Edge Edge::operator=(const Edge &that)
 
 bool Edge::operator==(const Edge &that)
 {
-	return (this->start_point==that.start_point && this->fin_point == that.fin_point);
+	return ((this->start_point==that.start_point && this->fin_point == that.fin_point) || (this->start_point == that.fin_point && this->fin_point == that.start_point));
 }

@@ -1,5 +1,6 @@
 
 #include<iostream>
+#include<fstream>
 #include<vector>
 #include <algorithm> 
 #include <SFML/Graphics.hpp>
@@ -70,14 +71,14 @@ void prin_point(Node point)
 }
 
 template < typename T>
-int is_belong( T& node, vector<T> vec ) 
+bool is_belong( T& node, vector<T> vec ) 
 {
 
 	for (int i = 0; i < vec.size(); i++)
 	{
-		if (vec[i] == node)return i;
+		if (vec[i] == node) return true;
 	}
-	return 0;
+	return false;
 
 }
 
@@ -113,8 +114,11 @@ private:
 	void combine();
 
 
-	vector<Node> find_second_node(const Node& ver);
-	bool find_third_vertex(const Edge& edge);
+	vector<Node> find_second_nodes( Node& ver);//find all nodes conected with ver
+	vector<Node> find_third_vertex( Edge edge);//find third vertex too build triangle with edge 
+	void add_triangle(Triangle& tr,vector<Triangle> &vector);
+	void add_edge(Edge e, vector<Edge>& vec);
+	//add triangle to delone_trangles if it is uniq
 
 
 
@@ -130,10 +134,11 @@ Grafs::~Grafs()
 }
 
 void Grafs::convex_hull()
-{
-	find_centre_of_points();
-	recognise_centre();
+{	
 	convex_hull_points = points;
+	/*find_centre_of_points();
+	recognise_centre();*/
+	
 	if (convex_hull_points.size() == 1)  return;
 	sort(convex_hull_points.begin(), convex_hull_points.end());
 	Node p1 = convex_hull_points[0], p2 = convex_hull_points.back();
@@ -195,7 +200,12 @@ Node Grafs::recognise_centre()
 	for (int i = 1; i < points.size(); i++)
 	{
 		Edge temp(centre_of_selection,points[i]);
-		if (temp.lnegth_of_edge() < length && !is_belong(points[i], convex_hull_points))
+		if (is_belong(points[i-1], convex_hull_points) && !is_belong(points[i], convex_hull_points))
+		{
+			result = temp;
+			length = temp.lnegth_of_edge();
+		}
+		if (temp.lnegth_of_edge() < length  && !is_belong(points[i], convex_hull_points))
 		{
 			result = temp;
 			length = temp.lnegth_of_edge();
@@ -219,29 +229,77 @@ vector<Edge> Grafs::get_convex_hull()
 
 vector<Edge> Grafs::dalone_triangulation()
 {
+
+	vector<Triangle> delone_triangles;
 	recognise_centre();
 	set_polar_angels();
 
 	sort(points.begin(),points.end(), cmp_angle);
-
-	for (int i = 1; i < points.size(); i++)
-	{
-		
-		delone_triangulation_edges.push_back(Edge (centre_of_selection, points[i]));
-	}
 	
-	delone_triangulation_edges.push_back(Edge(points[1], points[points.size()-1]));
-	for (int i = 1; i < points.size()-1; i++)
-	{
-		delone_triangulation_edges.push_back(Edge(points[i], points[i + 1]));
+	if (convex_hull_points.size() != points.size()) 
+	{	
+		for (int i = 1; i < points.size() - 1; i++)
+		{
+			add_edge(Edge(points[i], points[i + 1]), delone_triangulation_edges);
+			
+		}
+			add_edge(Edge(points[1], points[points.size() - 1]), delone_triangulation_edges);
+			
+		
 	}
+	for (int i = 1; i < points.size(); i++)
+		{
+		add_edge(Edge(centre_of_selection, points[i]), delone_triangulation_edges);
+		}
+	
+
+	
+
 
 	combine();
 
-	vector<Triangle> delone_triangles;
+	
 
 	print(delone_triangulation_edges);
+	
+	for (int i = 0; i < delone_triangulation_edges.size(); i++)
+	{
 
+
+		if (!is_belong(delone_triangulation_edges[i], convex_hull_Edges))
+		{
+			vector<Node> vertex = find_third_vertex(delone_triangulation_edges[i]);
+			for (int j = 0; j < vertex.size(); j++)
+			{
+				Triangle temp(delone_triangulation_edges[i].get_finish_point(), delone_triangulation_edges[i].get_start_point(),vertex[j]);
+				delone_triangulation_edges[i].set_neighbord(temp);
+				add_triangle(temp, delone_triangles);
+
+			}
+		}
+		
+
+	}
+	for (int i = 0; i < delone_triangulation_edges.size(); i++)
+	{
+
+		if (is_belong(delone_triangulation_edges[i], convex_hull_Edges))
+		{
+			vector<Node> vertex = find_third_vertex(delone_triangulation_edges[i]);
+			for (int j = 0; j < vertex.size(); j++)
+			{
+				Triangle temp(delone_triangulation_edges[i].get_finish_point(), delone_triangulation_edges[i].get_start_point(), vertex[j]);
+				if (is_belong(temp, delone_triangles))
+				{
+					delone_triangulation_edges[i].set_neighbord(temp);
+
+				}
+
+			}
+		}
+
+
+	}
 
 
 
@@ -280,36 +338,71 @@ void Grafs::combine()
 	}
 }
 
-//vector<Node> Grafs::find_second_node(const Node & ver)
-//{
-//	
-//		vector<Node>temp;
-//
-//		for (int i = 0; i < delone_triangulation_edges.size(); i++)
-//		{
-//			if (ver == delone_triangulation_edges[i].get_finish_point)
-//			{
-//				temp.push_back(delone_triangulation_edges[i].get_start_point);
-//			}
-//			else
-//			{
-//				if(ver == delone_triangulation_edges[i].get_start_point)
-//					temp.push_back(delone_triangulation_edges[i].get_finish_point);
-//			}
-//		}
-//
-//			return temp;
-//
-//}
-
-bool Grafs::find_third_vertex(const Edge & edge)
+vector<Node> Grafs::find_second_nodes( Node & ver)
 {
+	
+		vector<Node>temp;
 
+		for (int i = 0; i < delone_triangulation_edges.size(); i++)
+		{
+			if (ver == delone_triangulation_edges[i].get_finish_point())
+			{
+				temp.push_back(delone_triangulation_edges[i].get_start_point());
+			}
+			else
+			{
+				if(ver == delone_triangulation_edges[i].get_start_point())
+					temp.push_back(delone_triangulation_edges[i].get_finish_point());
+			}
+		}
 
-	return false;
+			return temp;
+
 }
 
+vector<Node> Grafs::find_third_vertex( Edge  edge)
+{
 
+	vector<Node> vertex;
+	Node temp = edge.get_start_point();
+	vector<Node >conected_with_start_point=find_second_nodes(temp);
+	temp = edge.get_finish_point();
+	vector<Node >conected_with_finish_point = find_second_nodes(temp);
+	for (int i = 0; i < conected_with_start_point.size(); i++)
+	{
+		for (int j = 0; j < conected_with_finish_point.size(); j++)
+			{
+				if (conected_with_start_point[i] == conected_with_finish_point[j])
+				{
+					vertex.push_back(conected_with_finish_point[j]);
+				}
+			}
+	}
+	
+
+
+
+	return vertex;
+}
+
+void Grafs::add_triangle(Triangle & tr, vector<Triangle> &vector)
+{
+	for (int i = 0; i < vector.size(); i++)
+	{
+		if (vector[i] == tr) return;
+	}
+	vector.push_back(tr);
+
+}
+
+void  Grafs::add_edge(Edge e, vector<Edge> &vec)
+{
+	for (int i = 0; i < vec.size(); i++)
+	{
+		if (vec[i] == e) return;
+	}
+	vec.push_back(e);
+}
 
 
 
@@ -318,11 +411,12 @@ bool Grafs::find_third_vertex(const Edge & edge)
 
 void main()
 {
+	ifstream inp_file("input.txt");
 	Node first_coordinate;
 	Node second_coordinate;
 	const int M1=1;
 	const int M2 = 2;
-	int N=10;
+	int N = 6;
 	double x;
 	double y;
 	Vertex line_to_draw[M2];
@@ -334,8 +428,10 @@ void main()
 	for (int i = 0; i < N ; i++)
 	{
 
-		x =50+ rand()%1200;
-		y = 50+ rand() % 600;
+		//x =50+ rand()%1200;
+		//y = 50+ rand() % 600;
+		inp_file >> x;
+		inp_file >> y;
 		Node temp(x,y);
 		points.push_back(temp);
 	}
@@ -402,6 +498,7 @@ void main()
 
 		test.dalone_triangulation();
 	
-	system("pause");
+
+		system("pause");
 
 }

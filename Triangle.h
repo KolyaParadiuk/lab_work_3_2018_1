@@ -8,10 +8,11 @@ class Triangle
 {
 public:
 	Triangle();
+	Triangle(Node x, Node y, Node z);
 	~Triangle();
-	//bool operator ==(const Edge&);
+	bool operator ==(const Triangle&);
+	std::vector<Node> vertex;
 private:
-	std::vector<Edge> edges;
 	Node centre_circumcircule;
 
 };
