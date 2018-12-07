@@ -20,12 +20,12 @@ Edge::~Edge()
 
 }
 
-Node Edge::get_start_point()
+Node& Edge::get_start_point()
 {
 	return start_point;
 }
 
-Node Edge::get_finish_point()
+Node& Edge::get_finish_point()
 {
 	return fin_point;
 }
@@ -42,7 +42,7 @@ void Edge::set_neighbord(Triangle & that)
 
 double Edge::lnegth_of_edge()
 {
-	return (sqrt(pow((fin_point.get_X()-start_point.get_X()),2))+ pow((fin_point.get_Y() - start_point.get_Y()), 2));
+	return (sqrt(pow((fin_point.get_X()-start_point.get_X()),2)+ pow((fin_point.get_Y() - start_point.get_Y()), 2)));
 }
 
 Edge Edge::operator=(const Edge &that)

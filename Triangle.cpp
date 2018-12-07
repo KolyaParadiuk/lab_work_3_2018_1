@@ -35,3 +35,31 @@ bool Triangle::operator==(const Triangle &that)
 	}
 	return true;
 }
+
+Node Triangle::get_unique_point(Edge& e)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (vertex[i] == e.get_start_point() || vertex[i] == e.get_finish_point())
+		{
+			i++;
+		}
+		else
+		{
+			return vertex[i];
+		}
+	}
+}
+
+Node Triangle::get_center_of_circle()
+{
+	double d = 2 * (vertex[0].get_X() * (vertex[1].get_Y() - vertex[2].get_Y() + vertex[1].get_X()) + vertex[1].get_X() * (vertex[2].get_Y() - vertex[0].get_Y()) + vertex[2].get_X()*(vertex[0].get_Y() - vertex[1].get_Y()));
+
+	double x = ((vertex[0].get_X() * vertex[0].get_X() + vertex[0].get_Y() * vertex[0].get_Y())*(vertex[1].get_Y() - vertex[2].get_Y()) + (vertex[1].get_X() * vertex[1].get_X() + vertex[1].get_Y() * vertex[1].get_Y())*(vertex[2].get_Y() - vertex[0].get_Y()) + (vertex[2].get_X() * vertex[2].get_X() + vertex[2].get_Y() * vertex[2].get_Y()) * (vertex[0].get_Y() - vertex[1].get_Y())) / d;
+
+	double y = ((vertex[0].get_X() * vertex[0].get_X() + vertex[0].get_Y() * vertex[0].get_Y())*(vertex[2].get_X() - vertex[1].get_X()) + (vertex[1].get_X() * vertex[1].get_X() + vertex[1].get_Y() * vertex[1].get_Y())*(vertex[0].get_X() - vertex[2].get_X()) + (vertex[2].get_X() * vertex[2].get_X() + vertex[2].get_Y() * vertex[2].get_Y()) * (vertex[1].get_X() - vertex[0].get_X())) / d;;
+
+	Node temp(x, y);
+
+	return temp;
+}

@@ -12,17 +12,18 @@ public:
 
 	~Edge();
 
-	Node get_start_point();
-	Node get_finish_point();
+	Node& get_start_point();
+	Node& get_finish_point();
 
 	void set_neighbord(Triangle &);
 	double lnegth_of_edge();
 	Edge operator = (const Edge& );
 	bool operator == (const Edge&);
+	std::vector<Triangle> neigbords;
 
 
 private:
-	std::vector<Triangle> neigbords;
+	
 	Node start_point;
 	Node fin_point;
 

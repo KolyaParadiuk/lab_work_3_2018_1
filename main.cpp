@@ -9,7 +9,7 @@
 #include"Triangle.h"
 #include <ctime>
 #include<set>
-
+#include<cmath>
 
 using namespace std;
 
@@ -31,6 +31,39 @@ bool cmp_angle(Node  first, Node  second)
 {
 	return (first.get_angle() < second.get_angle());
 }
+
+bool point_belongs_to_triangle(Triangle current_triangle, Node current_point)
+{
+	double a, b, c;
+
+	a = (current_triangle.vertex[0].get_X() - current_point.get_X()) * (current_triangle.vertex[1].get_Y() - current_triangle.vertex[0].get_Y()) - (current_triangle.vertex[1].get_X() - current_triangle.vertex[0].get_X()) * (current_triangle.vertex[0].get_Y() - current_point.get_Y());
+
+	b = (current_triangle.vertex[1].get_X() - current_point.get_X()) * (current_triangle.vertex[2].get_Y() - current_triangle.vertex[1].get_Y()) - (current_triangle.vertex[2].get_X() - current_triangle.vertex[1].get_X()) * (current_triangle.vertex[1].get_Y() - current_point.get_Y());
+
+	c = (current_triangle.vertex[2].get_X() - current_point.get_X()) * (current_triangle.vertex[0].get_Y() - current_triangle.vertex[2].get_Y()) - (current_triangle.vertex[0].get_X() - current_triangle.vertex[2].get_X()) * (current_triangle.vertex[2].get_Y() - current_point.get_Y());
+
+	if ((a >= 0 && b >= 0 && c >= 0) || (a <= 0 && b <= 0 && c <= 0))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool is_triangle(Triangle& tr)
+{
+	double ab = Edge(tr.vertex[0], tr.vertex[1]).lnegth_of_edge();
+	double bc = Edge(tr.vertex[1], tr.vertex[2]).lnegth_of_edge();
+	double ca = Edge(tr.vertex[2], tr.vertex[0]).lnegth_of_edge();
+
+	if (ab + bc == ca)return false;
+	if (ca + bc == ab)return false;
+	if (ab + ca == bc)return false;
+
+	return true;
+
+}
+
 void print(vector<Edge> convex_hull_edges)
 {
 	int size_of_hull = convex_hull_edges.size();
@@ -65,11 +98,6 @@ void print(vector<Edge> convex_hull_edges)
 	//}
 }
 
-void prin_point(Node point)
-{
-
-}
-
 template < typename T>
 bool is_belong( T& node, vector<T> vec ) 
 {
@@ -82,35 +110,125 @@ bool is_belong( T& node, vector<T> vec )
 
 }
 
+template < typename T>
+int find(T& node, vector<T> vec)
+{
+
+	for (int i = 0; i < vec.size(); i++)
+	{
+		if (vec[i] == node) return i;
+	}
+	return -1;
+
+}
+
+bool delaunay_condition(Edge& connected_edge)
+{
+	
+	Node first_node = connected_edge.neigbords[0].get_unique_point(connected_edge);
+	Node second_node = connected_edge.neigbords[1].get_unique_point(connected_edge);
+
+	double cosA;
+	double sinA;
+	double cosB;
+	double sinB;
+	
+		Edge a(first_node, connected_edge.get_start_point());
+		Edge b(first_node, connected_edge.get_finish_point());
+
+		/*cosA = (pow(A.lnegth_of_edge(), 2) + pow(B.lnegth_of_edge(), 2) - pow(connected_edge.lnegth_of_edge(), 2)) / (2 * A.lnegth_of_edge()*B.lnegth_of_edge());*/
+
+		cosA = ((a.get_start_point().get_X() - a.get_finish_point().get_X()) * (b.get_start_point().get_X() - b.get_finish_point().get_X()) + (a.get_start_point().get_Y() - a.get_finish_point().get_Y())*(b.get_start_point().get_Y() - b.get_finish_point().get_Y())) /(a.lnegth_of_edge() * b.lnegth_of_edge());
+		sinA = ((a.get_start_point().get_X() - a.get_finish_point().get_X()) * (b.get_start_point().get_Y() - b.get_finish_point().get_Y()) + (a.get_start_point().get_X() - a.get_finish_point().get_X())*(b.get_start_point().get_Y() - b.get_finish_point().get_Y())) / (a.lnegth_of_edge() * b.lnegth_of_edge());
+	
+	
+		Edge A(second_node, connected_edge.get_start_point());
+		Edge B(second_node, connected_edge.get_finish_point());
+		
+		cosB = ((A.get_start_point().get_X() - A.get_finish_point().get_X()) * (B.get_start_point().get_X() - B.get_finish_point().get_X()) + (A.get_start_point().get_Y() - A.get_finish_point().get_Y())*(B.get_start_point().get_Y() - B.get_finish_point().get_Y())) / (A.lnegth_of_edge() * B.lnegth_of_edge());
+		sinB = ((A.get_start_point().get_X() - A.get_finish_point().get_X()) * (B.get_start_point().get_Y() - B.get_finish_point().get_Y()) + (A.get_start_point().get_X() - A.get_finish_point().get_X())*(B.get_start_point().get_Y() - B.get_finish_point().get_Y())) / (A.lnegth_of_edge() * B.lnegth_of_edge());
+	
+
+	if ((sinA*cosB) + (cosA*sinB) >= 0)
+	{
+		return true;
+
+
+	
+	}
+	return false;
+}
+
+void rebuild_triangle(Edge& connected_edge, vector<Triangle>& triagles,vector<Edge>& edges)
+{
+	int index_of_first = -1, index_of_second = -1;
+
+	for (int i = 0; i < triagles.size(); i++)
+	{
+		if (connected_edge.neigbords[0] == triagles[i])
+		{
+			index_of_first = i;
+		}
+		if (connected_edge.neigbords[1] == triagles[i])
+		{
+			index_of_second = i;
+		}
+		if (index_of_first != -1 && index_of_second != -1)
+		{
+			break;
+		}
+	}
+	int edge_index = find(connected_edge, edges);
+
+	Node first(connected_edge.neigbords[0].get_unique_point(connected_edge)),
+
+		second(connected_edge.neigbords[1].get_unique_point(connected_edge));
+
+	Edge unique_edge(first, second);
+
+	Triangle first_triangle(connected_edge.get_start_point(), unique_edge.get_start_point(), connected_edge.get_finish_point()),
+
+		second_triangle(connected_edge.get_start_point(), unique_edge.get_finish_point(), connected_edge.get_finish_point());
+	unique_edge.set_neighbord(first_triangle);
+	unique_edge.set_neighbord(second_triangle);
+	edges[edge_index] = unique_edge;
+	triagles[index_of_first] = first_triangle;
+
+	triagles[index_of_second] = second_triangle;
+}
+
 class Grafs
 {
 public:
 	Grafs(vector<Node> &);
 	~Grafs();
 	void convex_hull();
-
-	
-	Node get_centre();
+	vector<Node> rand_unique_points(int number_of_dots);
+	vector<Node> read_from_file_points(string& file_name);
 	vector<Edge> get_convex_hull();
 	vector<Edge> dalone_triangulation();
 
 	
-
+	void print_delone_triangulation();
+	void print_convex_hull();
+	//void print_voronoi_diagram();
 	
 
 
 
 
 private:
-	vector<Node> points;
-	vector<Edge> convex_hull_Edges;
-	vector<Edge> delone_triangulation_edges;
-	Node centre_of_selection;
+	vector<Node> points;	
 	vector<Node> convex_hull_points;
+	vector<Edge> convex_hull_Edges;
 	
-	void set_polar_angels();
-	void find_centre_of_points();
-	Node recognise_centre();
+	vector<Triangle> delone_triangles;
+	vector<Edge> delone_triangulation_edges;
+
+	
+	void set_polar_angels(vector<Node>&);
+
+
 	void combine();
 
 
@@ -118,6 +236,7 @@ private:
 	vector<Node> find_third_vertex( Edge edge);//find third vertex too build triangle with edge 
 	void add_triangle(Triangle& tr,vector<Triangle> &vector);
 	void add_edge(Edge e, vector<Edge>& vec);
+	
 	//add triangle to delone_trangles if it is uniq
 
 
@@ -136,8 +255,6 @@ Grafs::~Grafs()
 void Grafs::convex_hull()
 {	
 	convex_hull_points = points;
-	/*find_centre_of_points();
-	recognise_centre();*/
 	
 	if (convex_hull_points.size() == 1)  return;
 	sort(convex_hull_points.begin(), convex_hull_points.end());
@@ -171,57 +288,6 @@ void Grafs::convex_hull()
 
 }
 
-void Grafs::find_centre_of_points()
-{
-	size_t size = points.size();
-	double coord_X=0;
-	double coord_Y=0;
-
-	for (int i = 0; i < size; i++)
-	{
-		coord_X += points[i].get_X();
-		coord_Y += points[i].get_Y();
-	}
-
-	coord_X /= size;
-	coord_Y /= size;
-
-	Node res(coord_X,coord_Y);
-
-	centre_of_selection = res;
-
-}
-
-Node Grafs::recognise_centre()
-{
-	find_centre_of_points();
-	Edge result(centre_of_selection,points[0]);
-	double length=result.lnegth_of_edge();
-	for (int i = 1; i < points.size(); i++)
-	{
-		Edge temp(centre_of_selection,points[i]);
-		if (is_belong(points[i-1], convex_hull_points) && !is_belong(points[i], convex_hull_points))
-		{
-			result = temp;
-			length = temp.lnegth_of_edge();
-		}
-		if (temp.lnegth_of_edge() < length  && !is_belong(points[i], convex_hull_points))
-		{
-			result = temp;
-			length = temp.lnegth_of_edge();
-		}
-
-
-	}
-	centre_of_selection = result.get_finish_point();
-	return result.get_finish_point();
-}
-
-Node Grafs::get_centre()
-{
-	return centre_of_selection;
-}
-
 vector<Edge> Grafs::get_convex_hull()
 {
 	return convex_hull_Edges;
@@ -230,88 +296,140 @@ vector<Edge> Grafs::get_convex_hull()
 vector<Edge> Grafs::dalone_triangulation()
 {
 
-	vector<Triangle> delone_triangles;
-	recognise_centre();
-	set_polar_angels();
-
-	sort(points.begin(),points.end(), cmp_angle);
 	
-	if (convex_hull_points.size() != points.size()) 
-	{	
-		for (int i = 1; i < points.size() - 1; i++)
+	set_polar_angels(convex_hull_points);
+
+	sort(convex_hull_points.begin(), convex_hull_points.end(), cmp_angle);
+	
+
+	for (int i = 1; i < convex_hull_points.size(); i++)
 		{
-			add_edge(Edge(points[i], points[i + 1]), delone_triangulation_edges);
-			
-		}
-			add_edge(Edge(points[1], points[points.size() - 1]), delone_triangulation_edges);
-			
+	
+		if (i < convex_hull_points.size() - 1)
+		{
+			Triangle temp(convex_hull_points[0], convex_hull_points[i], convex_hull_points[i+1]);
 		
-	}
-	for (int i = 1; i < points.size(); i++)
-		{
-		add_edge(Edge(centre_of_selection, points[i]), delone_triangulation_edges);
+			add_triangle(temp, delone_triangles);
 		}
-	
-
-	
+		
+		add_edge(Edge(convex_hull_points[0], convex_hull_points[i]), delone_triangulation_edges);
+		}
 
 
 	combine();
 
-	
-
 	print(delone_triangulation_edges);
-	
+	for (int i = 0; i <  points.size(); i++)
+	{
+		for (int j = 0; j < convex_hull_points.size(); j++)
+		{
+			if (points[i] == convex_hull_points[j])
+			{
+				points.erase(points.begin() + i);
+				j = convex_hull_points.size();
+				i--;
+			}
+				
+			}
+	}
+
+	for (size_t i = 0; i < points.size(); i++)
+	{
+		int size_ = delone_triangles.size();
+		for (int j = 0; j < size_; j++)
+		{
+			if (point_belongs_to_triangle(delone_triangles[j], points[i]))
+			{
+				for (int k = 0; k < delone_triangles[j].vertex.size(); k++)
+				{
+					Edge E(points[i], delone_triangles[j].vertex[k]);
+					if (find(E, delone_triangulation_edges) == -1)
+					add_edge(E,delone_triangulation_edges);
+
+					Node C;
+
+					if (k == delone_triangles[j].vertex.size() - 1)
+					{
+						C = delone_triangles[j].vertex[0];
+					}else C = delone_triangles[j].vertex[k+1];
+					
+					Triangle temp(points[i], delone_triangles[j].vertex[k], C);
+					if (is_triangle(temp))
+					add_triangle(temp, delone_triangles);
+					else
+					{ 
+						Edge tempwq(delone_triangles[j].vertex[k], C);
+						if (find(tempwq, delone_triangulation_edges) != -1)
+						delone_triangulation_edges.erase(delone_triangulation_edges.begin() + find(tempwq, delone_triangulation_edges));
+					}
+					
+
+				}
+				delone_triangles.erase(delone_triangles.begin()+j);
+				j--;
+				size_--;
+
+			}
+			
+		}
+	}
+
+
 	for (int i = 0; i < delone_triangulation_edges.size(); i++)
 	{
-
-
-		if (!is_belong(delone_triangulation_edges[i], convex_hull_Edges))
+		vector<Node>temp = find_third_vertex(delone_triangulation_edges[i]);
+		for (int j = 0; j < temp.size(); j++)
 		{
-			vector<Node> vertex = find_third_vertex(delone_triangulation_edges[i]);
-			for (int j = 0; j < vertex.size(); j++)
-			{
-				Triangle temp(delone_triangulation_edges[i].get_finish_point(), delone_triangulation_edges[i].get_start_point(),vertex[j]);
-				delone_triangulation_edges[i].set_neighbord(temp);
-				add_triangle(temp, delone_triangles);
 
+			Triangle T(temp[j], delone_triangulation_edges[i].get_start_point(), delone_triangulation_edges[i].get_finish_point());
+			if (is_belong(T,delone_triangles))
+			{
+				delone_triangulation_edges[i].set_neighbord(T);
+			}
+		}
+	}
+	print(delone_triangulation_edges);
+
+	for (int i = 0; i < delone_triangulation_edges.size(); i++)
+	{
+		if (!is_belong(delone_triangulation_edges[i],convex_hull_Edges))
+		{
+			if (!delaunay_condition(delone_triangulation_edges[i]))
+			{
+				rebuild_triangle(delone_triangulation_edges[i], delone_triangles,delone_triangulation_edges);
+				i = -1;
+				print(delone_triangulation_edges);
 			}
 		}
 		
 
 	}
-	for (int i = 0; i < delone_triangulation_edges.size(); i++)
-	{
-
-		if (is_belong(delone_triangulation_edges[i], convex_hull_Edges))
-		{
-			vector<Node> vertex = find_third_vertex(delone_triangulation_edges[i]);
-			for (int j = 0; j < vertex.size(); j++)
-			{
-				Triangle temp(delone_triangulation_edges[i].get_finish_point(), delone_triangulation_edges[i].get_start_point(), vertex[j]);
-				if (is_belong(temp, delone_triangles))
-				{
-					delone_triangulation_edges[i].set_neighbord(temp);
-
-				}
-
-			}
-		}
-
-
-	}
-
-
-
+	
+	print(delone_triangulation_edges);
 
 	return vector<Edge>();
 }
 
-void Grafs::set_polar_angels()
+void Grafs::print_delone_triangulation()
 {
-	for (int i = 0; i < points.size();i++)
+	print(delone_triangulation_edges);
+}
+
+void Grafs::print_convex_hull()
+{
+	print(convex_hull_Edges);
+}
+
+void Grafs::set_polar_angels(vector<Node>& _points )
+{
+	int res=0;
+	for (int j = 1; j < _points.size(); j++)
 	{
-		points[i].FindPolarAngle(centre_of_selection);
+		if (_points[res].get_Y() > _points[j].get_Y()) res = j;
+	}
+	for (int i = 0; i < _points.size();i++)
+	{
+		_points[i].FindPolarAngle(_points[res]);
 	}
 }
 
@@ -387,6 +505,7 @@ vector<Node> Grafs::find_third_vertex( Edge  edge)
 
 void Grafs::add_triangle(Triangle & tr, vector<Triangle> &vector)
 {
+
 	for (int i = 0; i < vector.size(); i++)
 	{
 		if (vector[i] == tr) return;
@@ -404,41 +523,64 @@ void  Grafs::add_edge(Edge e, vector<Edge> &vec)
 	vec.push_back(e);
 }
 
+vector<Node> Grafs::rand_unique_points(int number_of_dots)
+{
+	srand(time(0));
+
+	double x, y;
+	bool flag=true;
+
+	while (points.size() < number_of_dots)
+	{
+		x = 50 + rand() % 600;
+		y = 50 + rand() % 600;
+		Node temp(x, y);
+		for (int j = 0; j < points.size(); j++)
+		{
+			if (points[j] == temp)
+			{
+				flag = false;
+			}
+		}
+		if (flag) points.push_back(temp);
+		else flag = true;
+	}
+	return points;
+}
+
+vector<Node> Grafs::read_from_file_points(string& file_name)
+{
+	ifstream inp_file(file_name);
+	double x, y;
 
 
-
+	while (inp_file && inp_file>>x&& inp_file >> y)
+	{
+		
+		points.push_back(Node(x,y));
+	}
+	return points;
+}
 
 
 void main()
 {
-	ifstream inp_file("input.txt");
+	string file_name = "input.txt";
 	Node first_coordinate;
 	Node second_coordinate;
 	const int M1=1;
 	const int M2 = 2;
-	int N = 6;
-	double x;
-	double y;
+	int N = 7;
 	Vertex line_to_draw[M2];
 	vector<Vertex[M2]> lines;
 	vector<Node> points;
 	vector<Edge> convex_hull_edges;
-
-	srand(time(0));
-	for (int i = 0; i < N ; i++)
-	{
-
-		//x =50+ rand()%1200;
-		//y = 50+ rand() % 600;
-		inp_file >> x;
-		inp_file >> y;
-		Node temp(x,y);
-		points.push_back(temp);
-	}
-	
-
-
 	Grafs test(points);
+	
+	
+	points = test.rand_unique_points(N);
+//	points = test.read_from_file_points(file_name);
+	
 	test.convex_hull();
 
 	convex_hull_edges = test.get_convex_hull();
@@ -456,7 +598,7 @@ void main()
 
 			window.clear();
 			
-			for (int i = 0; i < N; i++)
+			for (int i = 0; i < points.size(); i++)
 			{
 				first_coordinate = points[i];
 
@@ -468,14 +610,7 @@ void main()
 			}
 
 		
-			/*Node temp = test.get_centre();
-			Vertex point_to_draw[]
-			{
-				Vertex(Vector2f(temp.get_X(), temp.get_Y()))
-			};
-			window.draw(point_to_draw, 1, sf::Points);
-			
-*/
+		
 			
 			for (int i = 0; i < size_of_hull; i++)
 			{
