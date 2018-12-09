@@ -14,8 +14,6 @@ public:
 	Node get_unique_point(Edge & e);
 	Node get_center_of_circle();
 	std::vector<Node> vertex;
-private:
-
 };
 
 #include"Edge.h"
