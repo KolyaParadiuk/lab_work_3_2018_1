@@ -16,6 +16,7 @@ public:
 	Node& get_finish_point();
 
 	void set_neighbord(Triangle &);
+	void remove_neighbord(Triangle &);
 	double lnegth_of_edge();
 	Edge operator = (const Edge& );
 	bool operator == (const Edge&);

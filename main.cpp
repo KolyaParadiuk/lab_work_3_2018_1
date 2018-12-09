@@ -1,4 +1,5 @@
 
+#define _USE_MATH_DEFINES
 #include<iostream>
 #include<fstream>
 #include<vector>
@@ -132,29 +133,31 @@ bool delaunay_condition(Edge& connected_edge)
 	double sinA;
 	double cosB;
 	double sinB;
-	
+	double alpha1;
+	double alpha2;
+	double beta1;
+	double beta2;
 		Edge a(first_node, connected_edge.get_start_point());
 		Edge b(first_node, connected_edge.get_finish_point());
 
-		/*cosA = (pow(A.lnegth_of_edge(), 2) + pow(B.lnegth_of_edge(), 2) - pow(connected_edge.lnegth_of_edge(), 2)) / (2 * A.lnegth_of_edge()*B.lnegth_of_edge());*/
-
+		
+		
 		cosA = ((a.get_start_point().get_X() - a.get_finish_point().get_X()) * (b.get_start_point().get_X() - b.get_finish_point().get_X()) + (a.get_start_point().get_Y() - a.get_finish_point().get_Y())*(b.get_start_point().get_Y() - b.get_finish_point().get_Y())) /(a.lnegth_of_edge() * b.lnegth_of_edge());
+		alpha1 = acos(cosA);
 		sinA = ((a.get_start_point().get_X() - a.get_finish_point().get_X()) * (b.get_start_point().get_Y() - b.get_finish_point().get_Y()) + (a.get_start_point().get_X() - a.get_finish_point().get_X())*(b.get_start_point().get_Y() - b.get_finish_point().get_Y())) / (a.lnegth_of_edge() * b.lnegth_of_edge());
-	
+		alpha2 = asin(sinA);
 	
 		Edge A(second_node, connected_edge.get_start_point());
 		Edge B(second_node, connected_edge.get_finish_point());
 		
 		cosB = ((A.get_start_point().get_X() - A.get_finish_point().get_X()) * (B.get_start_point().get_X() - B.get_finish_point().get_X()) + (A.get_start_point().get_Y() - A.get_finish_point().get_Y())*(B.get_start_point().get_Y() - B.get_finish_point().get_Y())) / (A.lnegth_of_edge() * B.lnegth_of_edge());
 		sinB = ((A.get_start_point().get_X() - A.get_finish_point().get_X()) * (B.get_start_point().get_Y() - B.get_finish_point().get_Y()) + (A.get_start_point().get_X() - A.get_finish_point().get_X())*(B.get_start_point().get_Y() - B.get_finish_point().get_Y())) / (A.lnegth_of_edge() * B.lnegth_of_edge());
-	
+		beta1 = acos(cosB);
+		beta2 = asin(sinB);
 
-	if ((sinA*cosB) + (cosA*sinB) >= 0)
+	if (alpha1+beta1 <= M_PI)
 	{
 		return true;
-
-
-	
 	}
 	return false;
 }
@@ -163,37 +166,70 @@ void rebuild_triangle(Edge& connected_edge, vector<Triangle>& triagles,vector<Ed
 {
 	int index_of_first = -1, index_of_second = -1;
 
-	for (int i = 0; i < triagles.size(); i++)
-	{
-		if (connected_edge.neigbords[0] == triagles[i])
-		{
-			index_of_first = i;
-		}
-		if (connected_edge.neigbords[1] == triagles[i])
-		{
-			index_of_second = i;
-		}
-		if (index_of_first != -1 && index_of_second != -1)
-		{
-			break;
-		}
-	}
+	index_of_first = find(connected_edge.neigbords[0], triagles);
+	index_of_second= find(connected_edge.neigbords[1], triagles);
+
 	int edge_index = find(connected_edge, edges);
 
-	Node first(connected_edge.neigbords[0].get_unique_point(connected_edge)),
-
-		second(connected_edge.neigbords[1].get_unique_point(connected_edge));
+	Node first(connected_edge.neigbords[0].get_unique_point(connected_edge));
+	Node second(connected_edge.neigbords[1].get_unique_point(connected_edge));
 
 	Edge unique_edge(first, second);
+	Edge a(first,connected_edge.get_start_point());
+	int a_ind = find(a, edges);
+	edges[a_ind].remove_neighbord(triagles[index_of_first]);
+	
+	Edge b(first,connected_edge.get_finish_point());
+	int b_ind = find(b, edges);
+	edges[b_ind].remove_neighbord(triagles[index_of_first]);
+	
+	Edge c(second, connected_edge.get_start_point());
+	int c_ind = find(c, edges);
+	edges[c_ind].remove_neighbord(triagles[index_of_second]);
 
-	Triangle first_triangle(connected_edge.get_start_point(), unique_edge.get_start_point(), connected_edge.get_finish_point()),
+	Edge d(second,connected_edge.get_finish_point());
+	int d_ind = find(d, edges);
+	edges[d_ind].remove_neighbord(triagles[index_of_second]);
 
-		second_triangle(connected_edge.get_start_point(), unique_edge.get_finish_point(), connected_edge.get_finish_point());
+	vector<Edge> triangle_edges;
+	Triangle first_triangle(unique_edge.get_start_point(), connected_edge.get_start_point(), unique_edge.get_finish_point());
+	triangle_edges.push_back(Edge(first_triangle.vertex[0], first_triangle.vertex[1]));
+	triangle_edges.push_back(Edge(first_triangle.vertex[1], first_triangle.vertex[2]));
+	triangle_edges.push_back(Edge(first_triangle.vertex[2], first_triangle.vertex[0]));
+
+	if (is_belong(a, triangle_edges))
+		edges[a_ind].set_neighbord(first_triangle);
+	if (is_belong(b, triangle_edges))
+		edges[b_ind].set_neighbord(first_triangle);
+	if (is_belong(c, triangle_edges))
+		edges[c_ind].set_neighbord(first_triangle);
+	if (is_belong(d, triangle_edges))
+		edges[d_ind].set_neighbord(first_triangle);
+
+
+
+
+	Triangle second_triangle(unique_edge.get_start_point(), connected_edge.get_finish_point(), unique_edge.get_finish_point());
+	triangle_edges.clear();
+	triangle_edges.push_back(Edge(second_triangle.vertex[0], second_triangle.vertex[1]));
+	triangle_edges.push_back(Edge(second_triangle.vertex[1], second_triangle.vertex[2]));
+	triangle_edges.push_back(Edge(second_triangle.vertex[2], second_triangle.vertex[0]));
+
+	if (is_belong(a, triangle_edges))
+		edges[a_ind].set_neighbord(second_triangle);
+	if (is_belong(b, triangle_edges))
+		edges[b_ind].set_neighbord(second_triangle);
+	if (is_belong(c, triangle_edges))
+		edges[c_ind].set_neighbord(second_triangle);
+	if (is_belong(d, triangle_edges))
+		edges[d_ind].set_neighbord(second_triangle);
+
+
 	unique_edge.set_neighbord(first_triangle);
 	unique_edge.set_neighbord(second_triangle);
+	
 	edges[edge_index] = unique_edge;
 	triagles[index_of_first] = first_triangle;
-
 	triagles[index_of_second] = second_triangle;
 }
 
@@ -392,7 +428,7 @@ vector<Edge> Grafs::dalone_triangulation()
 
 	for (int i = 0; i < delone_triangulation_edges.size(); i++)
 	{
-		if (!is_belong(delone_triangulation_edges[i],convex_hull_Edges))
+		if (delone_triangulation_edges[i].neigbords.size()==2)
 		{
 			if (!delaunay_condition(delone_triangulation_edges[i]))
 			{
@@ -405,7 +441,9 @@ vector<Edge> Grafs::dalone_triangulation()
 
 	}
 	
+
 	print(delone_triangulation_edges);
+
 
 	return vector<Edge>();
 }
@@ -529,9 +567,14 @@ vector<Node> Grafs::rand_unique_points(int number_of_dots)
 
 	double x, y;
 	bool flag=true;
+	x = 50 + rand() % 600;
+	y = 50 + rand() % 600;
 
+	points.push_back(Node(x,y));
 	while (points.size() < number_of_dots)
 	{
+		
+		flag = true;
 		x = 50 + rand() % 600;
 		y = 50 + rand() % 600;
 		Node temp(x, y);
@@ -540,11 +583,13 @@ vector<Node> Grafs::rand_unique_points(int number_of_dots)
 			if (points[j] == temp)
 			{
 				flag = false;
+				break;
 			}
 		}
 		if (flag) points.push_back(temp);
-		else flag = true;
 	}
+
+		
 	return points;
 }
 
@@ -570,7 +615,7 @@ void main()
 	Node second_coordinate;
 	const int M1=1;
 	const int M2 = 2;
-	int N = 7;
+	int N = 10;
 	Vertex line_to_draw[M2];
 	vector<Vertex[M2]> lines;
 	vector<Node> points;
@@ -579,7 +624,7 @@ void main()
 	
 	
 	points = test.rand_unique_points(N);
-//	points = test.read_from_file_points(file_name);
+	//points = test.read_from_file_points(file_name);
 	
 	test.convex_hull();
 

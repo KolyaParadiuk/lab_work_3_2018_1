@@ -15,7 +15,6 @@ public:
 	Node get_center_of_circle();
 	std::vector<Node> vertex;
 private:
-	Node centre_circumcircule;
 
 };
 

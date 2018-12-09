@@ -40,6 +40,15 @@ void Edge::set_neighbord(Triangle & that)
 		
 }
 
+void Edge::remove_neighbord(Triangle &that)
+{
+	for (int i = 0; i < neigbords.size(); i++)
+	{
+		if (neigbords[i] == that) neigbords.erase(neigbords.begin()+i);
+	}
+	
+}
+
 double Edge::lnegth_of_edge()
 {
 	return (sqrt(pow((fin_point.get_X()-start_point.get_X()),2)+ pow((fin_point.get_Y() - start_point.get_Y()), 2)));
@@ -60,5 +69,6 @@ Edge Edge::operator=(const Edge &that)
 
 bool Edge::operator==(const Edge &that)
 {
+
 	return ((this->start_point==that.start_point && this->fin_point == that.fin_point) || (this->start_point == that.fin_point && this->fin_point == that.start_point));
 }
